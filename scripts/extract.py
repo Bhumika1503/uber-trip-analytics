@@ -8,7 +8,9 @@ def extract():
 
     print("Reading Parquet File...")
 
-    df = pd.read_parquet("data/raw/yellow_tripdata_2023-01.parquet")
+    df = pd.read_parquet(
+        "data/raw/yellow_tripdata_2023-01.parquet"
+    )
 
     logger.info(f"Rows Extracted : {len(df)}")
 

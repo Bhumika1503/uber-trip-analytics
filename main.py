@@ -21,23 +21,30 @@ def main():
 
     try:
 
+        # 1. Extract
         df = extract()
 
+        # 2. Validate
         df = validate(df)
 
+        # 3. Transform
         df = transform(df)
-        df = load(df)
 
+        # 4. Load
         load(df)
 
+        # 5. Create / update warehouse
         database()
 
+        # Execution time
         end_time = time.time()
 
-        execution_time = round(end_time - start_time, 2)
+        execution_time = round(
+            end_time - start_time,
+            2
+        )
 
-        print(f"\nPipeline Completed Successfully!")
-
+        print("\nPipeline Completed Successfully!")
         print(f"Execution Time : {execution_time} seconds")
 
         logger.info(
@@ -46,8 +53,7 @@ def main():
 
     except Exception as e:
 
-        print(f"\nPipeline Failed!")
-
+        print("\nPipeline Failed!")
         print(e)
 
         logger.exception(e)

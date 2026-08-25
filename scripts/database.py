@@ -1,6 +1,7 @@
 from pathlib import Path
 from sqlalchemy import text
 from config.database import engine
+from config.logger import logger
 
 
 def database():
@@ -13,13 +14,18 @@ def database():
 
         for sql_file in sql_files:
 
+            logger.info(f"Running {sql_file.name}")
             print(f"\nRunning {sql_file.name}")
+
 
             sql = sql_file.read_text(encoding="utf-8")
 
             connection.execute(text(sql))
 
+            logger.info(f"{sql_file.name} completed")
+
             print(f"✓ {sql_file.name} completed")
+
 
 
 if __name__ == "__main__":
