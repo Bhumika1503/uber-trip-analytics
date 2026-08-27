@@ -1,67 +1,37 @@
 import streamlit as st
+import pandas as pd
 
 from db_connection import run_query
 
-from queries import (
-    KPI_QUERY,
-    PAYMENT_QUERY,
-    VENDOR_QUERY,
-    TOP_PICKUP_QUERY,
-    TOP_ROUTES_QUERY,
-    DISTANCE_QUERY,
-    FARE_QUERY,
-    DISTANCE_FARE_QUERY
-)
 
-from charts import (
-    payment_revenue_chart,
-    payment_donut_chart,
-    vendor_performance_chart,
-    vendor_fare_chart,
-    vendor_distance_chart,
-    distance_distribution,
-    fare_distribution,
-    distance_fare_scatter,
-    pickup_location_chart,
-    top_routes_chart
-)
-
-
-# ============================================================
-# PAGE CONFIG
-# ============================================================
+# ---------------------------------------------------------
+# Page Configuration
+# ---------------------------------------------------------
 
 st.set_page_config(
     page_title="Uber Trip Analytics",
-    page_icon="🚖",
-    layout="wide",
-    initial_sidebar_state="expanded"
+    page_icon="🚕",
+    layout="wide"
 )
 
 
-# ============================================================
-# CUSTOM CSS
-# ============================================================
+# ---------------------------------------------------------
+# Styling
+# ---------------------------------------------------------
 
 st.markdown(
     """
     <style>
 
     .main {
-        background-color: #F8FAFC;
+        padding-top: 1rem;
     }
 
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-
-    h1 {
-        color: #264653;
-    }
-
-    h2, h3 {
-        color: #264653;
+    [data-testid="stMetric"] {
+        background-color: #F7F8FA;
+        border: 1px solid #E5E7EB;
+        padding: 18px;
+        border-radius: 12px;
     }
 
     </style>
@@ -70,263 +40,203 @@ st.markdown(
 )
 
 
-# ============================================================
-# SIDEBAR
-# ============================================================
+# ---------------------------------------------------------
+# Header
+# ---------------------------------------------------------
 
-st.sidebar.title("🚖 Uber Analytics")
+st.title("🚕 Uber Trip Analytics")
 
-st.sidebar.markdown(
-    "### Navigation"
+st.markdown(
+    "### Real-time analytical overview of Uber trip activity"
 )
 
-page = st.sidebar.radio(
-    "",
-    [
-        "Dashboard",
-        "About"
-    ]
+st.caption(
+    "Data Source: NYC Open Data • PostgreSQL Data Warehouse"
 )
 
+st.divider()
 
-# ============================================================
-# DASHBOARD
-# ============================================================
 
-if page == "Dashboard":
+# ---------------------------------------------------------
+# KPI Query
+# ---------------------------------------------------------
 
-    st.title("Uber Trip Analytics")
+KPI_QUERY = """
+SELECT
+    COUNT(*) AS total_trips,
 
-    st.markdown(
-        "### End-to-End Data Engineering & Business Intelligence"
+    COALESCE(
+        ROUND(SUM(total_revenue)::numeric, 2),
+        0
+    ) AS total_revenue,
+
+    COALESCE(
+        ROUND(AVG(total_revenue)::numeric, 2),
+        0
+    ) AS average_trip_value,
+
+    COALESCE(
+        ROUND(AVG(trip_miles)::numeric, 2),
+        0
+    ) AS average_distance,
+
+    COALESCE(
+        ROUND(AVG(trip_duration_minutes)::numeric, 2),
+        0
+    ) AS average_duration
+
+FROM warehouse.fact_trips;
+"""
+
+
+kpi_df = run_query(KPI_QUERY)
+
+
+# ---------------------------------------------------------
+# KPI Cards
+# ---------------------------------------------------------
+
+if not kpi_df.empty:
+
+    row = kpi_df.iloc[0]
+
+    col1, col2, col3, col4, col5 = st.columns(5)
+
+    col1.metric(
+        "🚕 Total Trips",
+        f"{int(row['total_trips']):,}"
     )
 
-    st.caption(
-        "Interactive analysis of Uber trip data using PostgreSQL and Streamlit"
+    col2.metric(
+        "💰 Total Revenue",
+        f"${float(row['total_revenue']):,.2f}"
     )
 
-    st.divider()
-
-
-    # ========================================================
-    # KPI
-    # ========================================================
-
-    kpi_df = run_query(KPI_QUERY)
-
-    if not kpi_df.empty:
-
-        row = kpi_df.iloc[0]
-
-        col1, col2, col3, col4, col5 = st.columns(5)
-
-        col1.metric(
-            "Total Trips",
-            f"{int(row['total_trips']):,}"
-        )
-
-        col2.metric(
-            "Total Revenue",
-            f"${float(row['total_revenue']):,.2f}"
-        )
-
-        col3.metric(
-            "Average Fare",
-            f"${float(row['average_fare']):,.2f}"
-        )
-
-        col4.metric(
-            "Average Distance",
-            f"{float(row['average_distance']):,.2f} mi"
-        )
-
-        col5.metric(
-            "Avg Passengers",
-            f"{float(row['average_passengers']):,.2f}"
-        )
-
-
-    st.divider()
-
-
-    # ========================================================
-    # PAYMENT ANALYSIS
-    # ========================================================
-
-    payment_df = run_query(PAYMENT_QUERY)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        payment_revenue_chart(payment_df)
-
-    with col2:
-
-        payment_donut_chart(payment_df)
-
-
-    st.divider()
-
-
-    # ========================================================
-    # VENDOR ANALYSIS
-    # ========================================================
-
-    vendor_df = run_query(VENDOR_QUERY)
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        vendor_performance_chart(vendor_df)
-
-    with col2:
-
-        vendor_fare_chart(vendor_df)
-
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        vendor_distance_chart(vendor_df)
-
-    with col2:
-
-        st.subheader("Vendor Analysis")
-
-        st.dataframe(
-            vendor_df,
-            use_container_width=True,
-            hide_index=True
-        )
-
-
-    st.divider()
-
-
-    # ========================================================
-    # TRIP BEHAVIOR
-    # ========================================================
-
-    st.header("Trip Behavior")
-
-    distance_df = run_query(DISTANCE_QUERY)
-
-    fare_df = run_query(FARE_QUERY)
-
-    distance_fare_df = run_query(DISTANCE_FARE_QUERY)
-
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        distance_distribution(distance_df)
-
-    with col2:
-
-        fare_distribution(fare_df)
-
-
-    distance_fare_scatter(
-        distance_fare_df
+    col3.metric(
+        "💵 Avg Trip Value",
+        f"${float(row['average_trip_value']):,.2f}"
     )
 
-
-    st.divider()
-
-
-    # ========================================================
-    # LOCATION ANALYSIS
-    # ========================================================
-
-    st.header("Location & Route Analysis")
-
-    pickup_df = run_query(
-        TOP_PICKUP_QUERY
+    col4.metric(
+        "📏 Avg Distance",
+        f"{float(row['average_distance']):,.2f} mi"
     )
 
-    route_df = run_query(
-        TOP_ROUTES_QUERY
+    col5.metric(
+        "⏱️ Avg Duration",
+        f"{float(row['average_duration']):,.2f} min"
     )
-
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-
-        pickup_location_chart(
-            pickup_df
-        )
-
-    with col2:
-
-        top_routes_chart(
-            route_df
-        )
-
-
-# ============================================================
-# ABOUT
-# ============================================================
 
 else:
 
-    st.title("About This Project")
+    st.warning("No trip data available.")
 
-    st.markdown(
-        """
-        ## Uber Trip Analytics Pipeline
 
-        This is an end-to-end data engineering project that
-        transforms raw Uber trip data into analytical insights.
+st.divider()
 
-        ### Architecture
 
-        **Raw Data**
+# ---------------------------------------------------------
+# Hourly Demand
+# ---------------------------------------------------------
 
-        ↓
+st.subheader("📈 Trip Demand by Hour")
 
-        **Python ETL**
+HOUR_QUERY = """
+SELECT
+    pickup_hour,
+    COUNT(*) AS total_trips
+FROM warehouse.fact_trips
+WHERE pickup_hour IS NOT NULL
+GROUP BY pickup_hour
+ORDER BY pickup_hour;
+"""
 
-        ↓
+hour_df = run_query(HOUR_QUERY)
 
-        **Validation & Transformation**
+if not hour_df.empty:
 
-        ↓
+    hour_df["pickup_hour"] = hour_df["pickup_hour"].astype(int)
 
-        **PostgreSQL Data Warehouse**
-
-        ↓
-
-        **Apache Spark Analytics**
-
-        ↓
-
-        **Streamlit Dashboard**
-
-        ### Technology Stack
-
-        - Python
-        - Pandas
-        - PostgreSQL
-        - SQL
-        - Apache Spark
-        - JDBC
-        - Streamlit
-        - Plotly
-
-        ### Dashboard Analysis
-
-        - Revenue analysis
-        - Payment behavior
-        - Vendor performance
-        - Fare analysis
-        - Trip distance analysis
-        - Distance vs fare relationship
-        - Pickup location analysis
-        - Popular route analysis
-        """
+    st.line_chart(
+        hour_df.set_index("pickup_hour")["total_trips"]
     )
+
+else:
+
+    st.info("No hourly data available.")
+
+
+# ---------------------------------------------------------
+# Revenue vs Trips
+# ---------------------------------------------------------
+
+st.subheader("💰 Revenue Overview")
+
+REVENUE_QUERY = """
+SELECT
+    pickup_date,
+    COUNT(*) AS total_trips,
+    ROUND(SUM(total_revenue)::numeric, 2) AS total_revenue
+FROM warehouse.fact_trips
+WHERE pickup_date IS NOT NULL
+GROUP BY pickup_date
+ORDER BY pickup_date;
+"""
+
+revenue_df = run_query(REVENUE_QUERY)
+
+if not revenue_df.empty:
+
+    revenue_df["pickup_date"] = pd.to_datetime(
+        revenue_df["pickup_date"]
+    )
+
+    revenue_df = revenue_df.set_index("pickup_date")
+
+    st.line_chart(
+        revenue_df[
+            ["total_trips", "total_revenue"]
+        ]
+    )
+
+else:
+
+    st.info("No revenue data available.")
+
+
+# ---------------------------------------------------------
+# Top Pickup Locations
+# ---------------------------------------------------------
+
+st.subheader("📍 Top Pickup Locations")
+
+LOCATION_QUERY = """
+SELECT
+    pickup_location,
+    COUNT(*) AS total_trips
+FROM warehouse.fact_trips
+WHERE pickup_location IS NOT NULL
+GROUP BY pickup_location
+ORDER BY total_trips DESC
+LIMIT 10;
+"""
+
+location_df = run_query(LOCATION_QUERY)
+
+if not location_df.empty:
+
+    st.bar_chart(
+        location_df.set_index("pickup_location")
+    )
+
+else:
+
+    st.info("No location data available.")
+
+
+st.divider()
+
+st.caption(
+    "Uber Trip Analytics • Built with Python, PostgreSQL, "
+    "PySpark and Streamlit"
+)

@@ -1,28 +1,29 @@
--- 1. Total Trips
-SELECT COUNT(*) AS total_trips
+SELECT
+    COUNT(*) AS total_trips
 FROM warehouse.fact_trips;
 
--- 2. Negative Trip Distance
-SELECT COUNT(*) AS negative_distance
-FROM warehouse.fact_trips
-WHERE trip_distance < 0;
 
--- 3. Negative Fare
-SELECT COUNT(*) AS negative_fare
+SELECT
+    hvfhs_license_num,
+    COUNT(*) AS trip_count
 FROM warehouse.fact_trips
-WHERE fare_amount < 0;
+GROUP BY hvfhs_license_num;
 
--- 4. Missing Passenger Count
-SELECT COUNT(*) AS missing_passengers
-FROM warehouse.fact_trips
-WHERE passenger_count IS NULL;
 
--- 5. Missing Payment Type
-SELECT COUNT(*) AS missing_payment
+SELECT
+    COUNT(*) AS missing_datetime_records
 FROM warehouse.fact_trips
-WHERE payment_type IS NULL;
+WHERE pickup_datetime IS NULL
+   OR dropoff_datetime IS NULL;
 
--- 6. Trips with Zero Distance
-SELECT COUNT(*) AS zero_distance
+
+SELECT
+    COUNT(*) AS invalid_distance_records
 FROM warehouse.fact_trips
-WHERE trip_distance = 0;
+WHERE trip_miles < 0;
+
+
+SELECT
+    COUNT(*) AS invalid_duration_records
+FROM warehouse.fact_trips
+WHERE trip_time < 0;
