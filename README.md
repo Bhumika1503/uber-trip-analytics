@@ -64,3 +64,88 @@ The project is designed to demonstrate how different components of a modern data
        |  Airflow    |
        | Orchestration|
        +-------------+
+---
+
+
+##  Technology Stack
+Technology	Purpose
+Python	ETL and application development
+PostgreSQL	Data warehouse and analytical storage
+Apache Airflow	Pipeline orchestration
+Apache Spark / PySpark	Distributed data processing and analytics
+Streamlit	Interactive dashboard
+Pandas	Data manipulation
+SQL	Data transformation and analytical queries
+JDBC	Spark-to-PostgreSQL connectivity
+python-dotenv	Environment configuration
+Git / GitHub	Version control
+
+Streamlit Dashboard
+
+The project includes a multi-page Streamlit dashboard for exploring analytical results.
+
+Dashboard Structure
+Dashboard
+│
+├── Overview
+│
+├── Demand Analysis
+│
+├── Revenue Analysis
+│
+├── Trip Analysis
+│
+├── Location Analysis
+│
+└── Ride Type Analysis
+
+## Running the Project
+
+### 1. Clone the repository
+git clone <repository-url>
+cd uber-trip-analytics
+
+### 2. Create and activate virtual environment
+
+Windows:
+python -m venv venv
+venv\Scripts\activate
+
+WSL/Linux:
+python -m venv venv
+source venv/bin/activate
+
+### 3. Install dependencies
+pip install -r requirements.txt
+
+### 4. Configure `.env`
+
+### 5. Run ETL
+python main.py
+
+### 6. Run Spark Analytics
+python -m spark.main
+
+### 7. Run Dashboard
+streamlit run dashboard/app.py
+
+### 8. Run with Airflow
+Start Airflow and trigger the `uber_trip_pipeline` DAG.
+
+Pipeline flow:
+ETL → Spark Analytics
+
+## Future Improvements
+
+- Advanced data quality checks
+- Pipeline monitoring and failure alerts
+- Spark performance optimization
+- Cloud deployment using Azure or AWS
+- Docker containerization
+
+## Author
+
+### Bhumika Chauhan
+
+B.Tech Computer Science Engineering  
+Data Engineering | Python | SQL | PostgreSQL | PySpark | Apache Airflow
