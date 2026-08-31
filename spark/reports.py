@@ -1,24 +1,17 @@
-from pyspark.sql.functions import (
-    col,
-    sum,
-    round,
-    hour,
-    count
-)
+from pyspark.sql.functions import col, sum, round, count
 
-def revenue_by_payment(df):
 
-    print("\nRevenue By Payment Type")
+def revenue_analysis(df):
+
+    print("\nRevenue Analysis")
 
     (
-        df.groupBy("payment_type")
-        .agg(
+        df.agg(
             round(
-                sum("total_amount"),
+                sum("total_revenue"),
                 2
-            ).alias("Revenue")
+            ).alias("Total Revenue")
         )
-        .orderBy(col("Revenue").desc())
         .show()
     )
 
@@ -28,11 +21,7 @@ def busiest_pickup_hours(df):
     print("\nBusiest Pickup Hours")
 
     (
-        df.withColumn(
-            "pickup_hour",
-            hour("tpep_pickup_datetime")
-        )
-        .groupBy("pickup_hour")
+        df.groupBy("pickup_hour")
         .agg(
             count("*").alias("Trips")
         )
